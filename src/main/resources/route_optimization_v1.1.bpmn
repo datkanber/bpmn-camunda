@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0rlrpgd" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.32.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
+  <bpmn:collaboration id="Collaboration_153fp78">
+    <bpmn:participant id="Participant_1k1vvgl" processRef="Process_0rizdzc" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_0rizdzc" name="Route_optimization_v1.1" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_1vn5kp9">
+      <bpmn:lane id="Lane_0c0m7ig" name="Kullanıcı (User)">
+        <bpmn:flowNodeRef>start_event_user_login</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>user_task_create_order</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>end_event_delivery_completed</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_0efajg8" name="Filo Yönetim Uygulaması (FleetApp)">
+        <bpmn:flowNodeRef>service_task_save_order</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>user_task_select_customer_requests</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>service_task_routingml_conversion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>service_task_send_routingml_to_cloud</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>message_catch_receive_results</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>user_task_admin_review_and_approve_results</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>exclusive_gateway_approval_check</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>parallel_gateway_distribute_results</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>receive_task_receive_r4v_from_ev</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>parallel_gateway_collect_updates</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>service_task_compare_simulation_results</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>service_task_save_routes_r4p</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>user_task_revise_order</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>receive_task_receive_sim_result_from_sumo</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>message_throw_send_routingml</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_1ku6cni" name="Bulut Rota Algoritması (Cloud)">
+        <bpmn:flowNodeRef>message_catch_receive_routingml</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>service_task_cloud_optimization</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>service_task_send_results_to_fleetapp</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>message_throw_send_results</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_1no3m57" name="Simülasyon (SUMO) &#38; Elektrikli Araçlar (EV)">
+        <bpmn:flowNodeRef>service_task_send_r4v_to_ev</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>service_task_send_r4s_to_sumo</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="start_event_user_login" name="Kullanıcı Sisteme Giriş Yapar">
+      <bpmn:outgoing>Flow_0peb5uz</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="user_task_create_order" name="Sipariş Oluştur" camunda:assignee="demo">
+      <bpmn:incoming>Flow_0peb5uz</bpmn:incoming>
+      <bpmn:outgoing>Flow_141xs9r</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="service_task_save_order" name=" Siparişi Kaydet" camunda:delegateExpression="${fetchDataService}">
+      <bpmn:incoming>Flow_141xs9r</bpmn:incoming>
+      <bpmn:outgoing>Flow_1opub6z</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="user_task_select_customer_requests" name="Admin, Müşteri Taleplerini Seçer" camunda:assignee="demo">
+      <bpmn:incoming>Flow_1opub6z</bpmn:incoming>
+      <bpmn:outgoing>Flow_0fr9ejb</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="service_task_routingml_conversion" name="RoutingML Dönüşümü Yap" camunda:delegateExpression="${optimizationService}">
+      <bpmn:incoming>Flow_0fr9ejb</bpmn:incoming>
+      <bpmn:outgoing>Flow_02gkmt0</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="service_task_send_routingml_to_cloud" name="RoutingML&#39;i Cloud&#39;a Gönderme" camunda:delegateExpression="${updateMapService}">
+      <bpmn:incoming>Flow_02gkmt0</bpmn:incoming>
+      <bpmn:outgoing>Flow_1jv7jr4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:intermediateCatchEvent id="message_catch_receive_routingml" name="RoutingML Verisini Al">
+      <bpmn:incoming>Flow_0pgja57</bpmn:incoming>
+      <bpmn:outgoing>Flow_1e8m49y</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1noe60n" messageRef="Message_0rbv4qk" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="message_catch_receive_results" name="Sonuç Verisi Alındı">
+      <bpmn:incoming>Flow_15xywcp</bpmn:incoming>
+      <bpmn:outgoing>Flow_1icsu1z</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0r8v52b" messageRef="Message_12811bc" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="user_task_admin_review_and_approve_results" name="Admin, Sonuçları İnceler ve Onaylar" camunda:assignee="demo">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="approved" label="Onay" type="boolean" defaultValue="false" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1icsu1z</bpmn:incoming>
+      <bpmn:incoming>Flow_0xa1r2c</bpmn:incoming>
+      <bpmn:outgoing>sequence_flow_approval_check</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="exclusive_gateway_approval_check">
+      <bpmn:incoming>sequence_flow_approval_check</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ozv9m1</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0ln5rbs</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:parallelGateway id="parallel_gateway_distribute_results" name="Verileri EV ve SUMO’ya Gönder">
+      <bpmn:incoming>Flow_0fpo38l</bpmn:incoming>
+      <bpmn:outgoing>sequence_flow_gateway_to_ev</bpmn:outgoing>
+      <bpmn:outgoing>sequence_flow_gateway_to_sumo</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:serviceTask id="service_task_send_r4v_to_ev" name="EV&#39;ye R4Vehicle Gönder" camunda:delegateExpression="${updateMapService}">
+      <bpmn:incoming>sequence_flow_gateway_to_ev</bpmn:incoming>
+      <bpmn:outgoing>Flow_1cmpc60</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="service_task_send_r4s_to_sumo" name="SUMO’ya R4Simulation Gönder" camunda:delegateExpression="${updateMapService}">
+      <bpmn:incoming>sequence_flow_gateway_to_sumo</bpmn:incoming>
+      <bpmn:outgoing>Flow_0e7qbfo</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="service_task_cloud_optimization" name="Cloud Rota Optimizasyon Hesaplama" camunda:delegateExpression="${optimizationService}">
+      <bpmn:incoming>Flow_1e8m49y</bpmn:incoming>
+      <bpmn:outgoing>Flow_1om0hzd</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="service_task_send_results_to_fleetapp" name="Sonuçları FleetApp’e Gönder" camunda:delegateExpression="${updateMapService}">
+      <bpmn:incoming>Flow_1om0hzd</bpmn:incoming>
+      <bpmn:outgoing>Flow_0l9x3hn</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:intermediateThrowEvent id="message_throw_send_results" name="Sonuç Verisi Gönderiliyor">
+      <bpmn:incoming>Flow_0l9x3hn</bpmn:incoming>
+      <bpmn:outgoing>Flow_15xywcp</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1cuyrgz" messageRef="Message_12811bc" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:receiveTask id="receive_task_receive_r4v_from_ev" name="EV’den R4V Alındı" messageRef="Message_0o42j93">
+      <bpmn:incoming>Flow_1cmpc60</bpmn:incoming>
+      <bpmn:outgoing>Flow_1y98pj3</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:parallelGateway id="parallel_gateway_collect_updates" name="Güncellemeler Toplandı">
+      <bpmn:incoming>Flow_1y98pj3</bpmn:incoming>
+      <bpmn:incoming>Flow_1qizipq</bpmn:incoming>
+      <bpmn:outgoing>sequence_flow_updates_to_comparison</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:serviceTask id="service_task_compare_simulation_results" name="Simülasyon Sonucu Karşılaştır" camunda:delegateExpression="${optimizationService}">
+      <bpmn:incoming>sequence_flow_updates_to_comparison</bpmn:incoming>
+      <bpmn:outgoing>Flow_0y2b653</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="end_event_delivery_completed" name="Teslimat Tamamlandı">
+      <bpmn:incoming>Flow_0y2b653</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0peb5uz" sourceRef="start_event_user_login" targetRef="user_task_create_order" />
+    <bpmn:sequenceFlow id="Flow_141xs9r" sourceRef="user_task_create_order" targetRef="service_task_save_order" />
+    <bpmn:sequenceFlow id="Flow_1opub6z" sourceRef="service_task_save_order" targetRef="user_task_select_customer_requests" />
+    <bpmn:sequenceFlow id="Flow_0fr9ejb" sourceRef="user_task_select_customer_requests" targetRef="service_task_routingml_conversion" />
+    <bpmn:sequenceFlow id="Flow_02gkmt0" sourceRef="service_task_routingml_conversion" targetRef="service_task_send_routingml_to_cloud" />
+    <bpmn:sequenceFlow id="Flow_1jv7jr4" sourceRef="service_task_send_routingml_to_cloud" targetRef="message_throw_send_routingml" />
+    <bpmn:sequenceFlow id="Flow_0pgja57" sourceRef="message_throw_send_routingml" targetRef="message_catch_receive_routingml" />
+    <bpmn:sequenceFlow id="Flow_1e8m49y" sourceRef="message_catch_receive_routingml" targetRef="service_task_cloud_optimization" />
+    <bpmn:sequenceFlow id="Flow_15xywcp" sourceRef="message_throw_send_results" targetRef="message_catch_receive_results" />
+    <bpmn:sequenceFlow id="Flow_1icsu1z" sourceRef="message_catch_receive_results" targetRef="user_task_admin_review_and_approve_results" />
+    <bpmn:sequenceFlow id="sequence_flow_approval_check" sourceRef="user_task_admin_review_and_approve_results" targetRef="exclusive_gateway_approval_check" />
+    <bpmn:sequenceFlow id="Flow_1ozv9m1" sourceRef="exclusive_gateway_approval_check" targetRef="service_task_save_routes_r4p">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0ln5rbs" sourceRef="exclusive_gateway_approval_check" targetRef="user_task_revise_order">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0fpo38l" sourceRef="service_task_save_routes_r4p" targetRef="parallel_gateway_distribute_results" />
+    <bpmn:sequenceFlow id="sequence_flow_gateway_to_ev" sourceRef="parallel_gateway_distribute_results" targetRef="service_task_send_r4v_to_ev" />
+    <bpmn:sequenceFlow id="sequence_flow_gateway_to_sumo" sourceRef="parallel_gateway_distribute_results" targetRef="service_task_send_r4s_to_sumo" />
+    <bpmn:sequenceFlow id="Flow_1cmpc60" sourceRef="service_task_send_r4v_to_ev" targetRef="receive_task_receive_r4v_from_ev" />
+    <bpmn:sequenceFlow id="Flow_0e7qbfo" sourceRef="service_task_send_r4s_to_sumo" targetRef="receive_task_receive_sim_result_from_sumo" />
+    <bpmn:sequenceFlow id="Flow_1om0hzd" sourceRef="service_task_cloud_optimization" targetRef="service_task_send_results_to_fleetapp" />
+    <bpmn:sequenceFlow id="Flow_0l9x3hn" sourceRef="service_task_send_results_to_fleetapp" targetRef="message_throw_send_results" />
+    <bpmn:sequenceFlow id="Flow_1qizipq" sourceRef="receive_task_receive_sim_result_from_sumo" targetRef="parallel_gateway_collect_updates" />
+    <bpmn:sequenceFlow id="Flow_1y98pj3" sourceRef="receive_task_receive_r4v_from_ev" targetRef="parallel_gateway_collect_updates" />
+    <bpmn:sequenceFlow id="sequence_flow_updates_to_comparison" sourceRef="parallel_gateway_collect_updates" targetRef="service_task_compare_simulation_results" />
+    <bpmn:sequenceFlow id="Flow_0y2b653" sourceRef="service_task_compare_simulation_results" targetRef="end_event_delivery_completed" />
+    <bpmn:serviceTask id="service_task_save_routes_r4p" name="Rotaları Kaydet (R4Plan)" camunda:delegateExpression="${loadParametersService}">
+      <bpmn:incoming>Flow_1ozv9m1</bpmn:incoming>
+      <bpmn:outgoing>Flow_0fpo38l</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0xa1r2c" sourceRef="user_task_revise_order" targetRef="user_task_admin_review_and_approve_results" />
+    <bpmn:userTask id="user_task_revise_order" name="Admin gerekli düzenlemeleri yapar" camunda:assignee="demo">
+      <bpmn:incoming>Flow_0ln5rbs</bpmn:incoming>
+      <bpmn:outgoing>Flow_0xa1r2c</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="receive_task_receive_sim_result_from_sumo" name="SUMO’dan Simülasyon Sonucu Alındı" messageRef="Message_3uui68l">
+      <bpmn:incoming>Flow_0e7qbfo</bpmn:incoming>
+      <bpmn:outgoing>Flow_1qizipq</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:intermediateThrowEvent id="message_throw_send_routingml" name="RoutingML Verisi Gönderiliyor">
+      <bpmn:incoming>Flow_1jv7jr4</bpmn:incoming>
+      <bpmn:outgoing>Flow_0pgja57</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0mb58qd" messageRef="Message_0rbv4qk" />
+    </bpmn:intermediateThrowEvent>
+  </bpmn:process>
+  <bpmn:message id="Message_0rbv4qk" name="msg_send_routingml" />
+  <bpmn:message id="Message_12811bc" name="msg_send_results_to_fleetapp" />
+  <bpmn:message id="Message_0o42j93" name="msg_r4v_response_from_ev" />
+  <bpmn:message id="Message_3uui68l" name="msg_simulation_result_from_sumo" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_153fp78">
+      <bpmndi:BPMNShape id="Participant_1k1vvgl_di" bpmnElement="Participant_1k1vvgl" isHorizontal="true">
+        <dc:Bounds x="160" y="120" width="3008" height="800" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1no3m57_di" bpmnElement="Lane_1no3m57" isHorizontal="true">
+        <dc:Bounds x="190" y="640" width="2978" height="280" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1ku6cni_di" bpmnElement="Lane_1ku6cni" isHorizontal="true">
+        <dc:Bounds x="190" y="502" width="2978" height="138" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0efajg8_di" bpmnElement="Lane_0efajg8" isHorizontal="true">
+        <dc:Bounds x="190" y="260" width="2978" height="242" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0c0m7ig_di" bpmnElement="Lane_0c0m7ig" isHorizontal="true">
+        <dc:Bounds x="190" y="120" width="2978" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1iwnfsx_di" bpmnElement="start_event_user_login">
+        <dc:Bounds x="252" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="227" y="225" width="86" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1odc1rn_di" bpmnElement="user_task_create_order" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="360" y="160" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1cs0j8t_di" bpmnElement="service_task_save_order" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="360" y="320" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0wkx7dt_di" bpmnElement="user_task_select_customer_requests" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="510" y="320" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1c6kp79_di" bpmnElement="service_task_routingml_conversion" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="680" y="320" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1gqx49m_di" bpmnElement="service_task_send_routingml_to_cloud" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="850" y="320" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1hh3d45_di" bpmnElement="message_catch_receive_routingml">
+        <dc:Bounds x="982" y="502" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="973" y="545" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1tzejnd_di" bpmnElement="message_catch_receive_results">
+        <dc:Bounds x="1512" y="342" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1439" y="346" width="62" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1f2o0dr_di" bpmnElement="user_task_admin_review_and_approve_results" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="1600" y="320" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1ra9f7g_di" bpmnElement="exclusive_gateway_approval_check" isMarkerVisible="true">
+        <dc:Bounds x="1755" y="335" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1761" y="305" width="40" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0jjzafp_di" bpmnElement="parallel_gateway_distribute_results">
+        <dc:Bounds x="2035" y="305" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2016" y="267.5" width="88" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1hua265_di" bpmnElement="service_task_send_r4v_to_ev" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="2160" y="660" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0iae2rz_di" bpmnElement="service_task_send_r4s_to_sumo" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="2160" y="770" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ug06hw_di" bpmnElement="service_task_cloud_optimization" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1110" y="530" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1th1qng_di" bpmnElement="service_task_send_results_to_fleetapp" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1310" y="530" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_10tnjx7_di" bpmnElement="message_throw_send_results">
+        <dc:Bounds x="1512" y="522" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1499" y="565" width="62" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_17ey12z_di" bpmnElement="receive_task_receive_r4v_from_ev" bioc:stroke="#205022" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#205022">
+        <dc:Bounds x="2400" y="290" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1h4lxw1_di" bpmnElement="parallel_gateway_collect_updates">
+        <dc:Bounds x="2625" y="355" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2534" y="370" width="72" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1o9h6gz_di" bpmnElement="service_task_compare_simulation_results" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="2800" y="340" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1x4n1ir_di" bpmnElement="end_event_delivery_completed">
+        <dc:Bounds x="3032" y="172" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3020" y="215" width="60" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1igkw47_di" bpmnElement="service_task_save_routes_r4p" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1910" y="290" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_00f0c02_di" bpmnElement="user_task_revise_order" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="1910" y="390" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0i53qyl_di" bpmnElement="receive_task_receive_sim_result_from_sumo" bioc:stroke="#205022" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#205022">
+        <dc:Bounds x="2400" y="400" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0dgxubi_di" bpmnElement="message_throw_send_routingml">
+        <dc:Bounds x="982" y="412" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1028" y="416" width="83" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0peb5uz_di" bpmnElement="Flow_0peb5uz">
+        <di:waypoint x="288" y="200" />
+        <di:waypoint x="360" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_141xs9r_di" bpmnElement="Flow_141xs9r">
+        <di:waypoint x="410" y="240" />
+        <di:waypoint x="410" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1opub6z_di" bpmnElement="Flow_1opub6z">
+        <di:waypoint x="460" y="360" />
+        <di:waypoint x="510" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fr9ejb_di" bpmnElement="Flow_0fr9ejb">
+        <di:waypoint x="610" y="360" />
+        <di:waypoint x="680" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02gkmt0_di" bpmnElement="Flow_02gkmt0">
+        <di:waypoint x="780" y="360" />
+        <di:waypoint x="850" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1jv7jr4_di" bpmnElement="Flow_1jv7jr4">
+        <di:waypoint x="950" y="360" />
+        <di:waypoint x="966" y="360" />
+        <di:waypoint x="966" y="430" />
+        <di:waypoint x="982" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0pgja57_di" bpmnElement="Flow_0pgja57">
+        <di:waypoint x="1000" y="448" />
+        <di:waypoint x="1000" y="502" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1e8m49y_di" bpmnElement="Flow_1e8m49y">
+        <di:waypoint x="1018" y="520" />
+        <di:waypoint x="1064" y="520" />
+        <di:waypoint x="1064" y="570" />
+        <di:waypoint x="1110" y="570" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15xywcp_di" bpmnElement="Flow_15xywcp">
+        <di:waypoint x="1530" y="522" />
+        <di:waypoint x="1530" y="378" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1icsu1z_di" bpmnElement="Flow_1icsu1z">
+        <di:waypoint x="1548" y="360" />
+        <di:waypoint x="1600" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ea0gpn_di" bpmnElement="sequence_flow_approval_check">
+        <di:waypoint x="1700" y="360" />
+        <di:waypoint x="1755" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ozv9m1_di" bpmnElement="Flow_1ozv9m1">
+        <di:waypoint x="1805" y="360" />
+        <di:waypoint x="1828" y="360" />
+        <di:waypoint x="1828" y="330" />
+        <di:waypoint x="1910" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ln5rbs_di" bpmnElement="Flow_0ln5rbs">
+        <di:waypoint x="1780" y="385" />
+        <di:waypoint x="1780" y="430" />
+        <di:waypoint x="1910" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fpo38l_di" bpmnElement="Flow_0fpo38l">
+        <di:waypoint x="2010" y="330" />
+        <di:waypoint x="2035" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12i3bh2_di" bpmnElement="sequence_flow_gateway_to_ev">
+        <di:waypoint x="2060" y="355" />
+        <di:waypoint x="2060" y="700" />
+        <di:waypoint x="2160" y="700" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2186" y="510" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1aunf5r_di" bpmnElement="sequence_flow_gateway_to_sumo">
+        <di:waypoint x="2060" y="355" />
+        <di:waypoint x="2060" y="810" />
+        <di:waypoint x="2160" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cmpc60_di" bpmnElement="Flow_1cmpc60">
+        <di:waypoint x="2260" y="700" />
+        <di:waypoint x="2320" y="700" />
+        <di:waypoint x="2320" y="330" />
+        <di:waypoint x="2400" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0e7qbfo_di" bpmnElement="Flow_0e7qbfo">
+        <di:waypoint x="2260" y="810" />
+        <di:waypoint x="2350" y="810" />
+        <di:waypoint x="2350" y="440" />
+        <di:waypoint x="2400" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1om0hzd_di" bpmnElement="Flow_1om0hzd">
+        <di:waypoint x="1210" y="570" />
+        <di:waypoint x="1310" y="570" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0l9x3hn_di" bpmnElement="Flow_0l9x3hn">
+        <di:waypoint x="1410" y="570" />
+        <di:waypoint x="1451" y="570" />
+        <di:waypoint x="1451" y="540" />
+        <di:waypoint x="1512" y="540" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1qizipq_di" bpmnElement="Flow_1qizipq">
+        <di:waypoint x="2500" y="440" />
+        <di:waypoint x="2650" y="440" />
+        <di:waypoint x="2650" y="405" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1y98pj3_di" bpmnElement="Flow_1y98pj3">
+        <di:waypoint x="2500" y="330" />
+        <di:waypoint x="2650" y="330" />
+        <di:waypoint x="2650" y="355" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00j5acg_di" bpmnElement="sequence_flow_updates_to_comparison">
+        <di:waypoint x="2675" y="380" />
+        <di:waypoint x="2800" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0y2b653_di" bpmnElement="Flow_0y2b653">
+        <di:waypoint x="2900" y="380" />
+        <di:waypoint x="2966" y="380" />
+        <di:waypoint x="2966" y="190" />
+        <di:waypoint x="3032" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xa1r2c_di" bpmnElement="Flow_0xa1r2c">
+        <di:waypoint x="1950" y="470" />
+        <di:waypoint x="1950" y="490" />
+        <di:waypoint x="1650" y="490" />
+        <di:waypoint x="1650" y="400" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
