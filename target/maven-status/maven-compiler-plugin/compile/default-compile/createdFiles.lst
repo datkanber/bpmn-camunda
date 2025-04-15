@@ -1,0 +1,11 @@
+com\opeva\service\OptimizationService.class
+com\opeva\service\RoutingMLConversionDelegate.class
+com\burak\Application.class
+com\opeva\service\UpdateMapService.class
+com\opeva\service\SendR4VehicleToEVDelegate.class
+com\opeva\service\SaveOrderDelegate.class
+com\opeva\service\SendRoutingMLToCloudDelegate.class
+com\opeva\service\SendR4SimulationToSumoDelegate.class
+com\burak\controllers\HomeController.class
+com\opeva\service\FetchDataService.class
+com\opeva\service\LoadParametersService.class
